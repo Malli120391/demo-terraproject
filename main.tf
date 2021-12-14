@@ -188,7 +188,53 @@ resource "aws_default_security_groups" "default-sg" {
  
      EOF*/
 
-     user_data = file("entry-script.sh")
+    # user_data = file("entry-script.sh")
+   
+   connection {
+      type     = "ssh"
+      user     = "ec2-user"
+      #password = var.root_password
+      host     = self.public_ip
+      private_key = file(var.private_key_location)
+  }
+
+     provisioner "file" {
+       source = "entry-script.sh"
+       destination = "/home/ec2-user/entry-script-on-ec2.sh"
+     
+     }
+
+     /*provisioner "file" {
+       source = "entry-script.sh"
+       destination = "/home/ec2-user/entry-script-on-ec2.sh"
+
+       connection {
+      type     = "ssh"
+      user     = "ec2-user"
+      #password = var.root_password
+      host     = self.someotherserver.public_ip
+      private_key = file(var.private_key_location)
+  }
+     
+     }*/
+     provisioner "remote-exec" {
+
+       script = file("entry-script-on-ec2.sh")
+
+       #script = file("entry-script.sh")
+
+       /*inline = [
+         "export ENV=dev",
+         "mkdir newdir"
+       ]*/
+       
+     }
+
+     provisioner "local-exec" {
+
+       command = "echo ${self.public_ip} > output.txt"
+     
+     }
 
    tags = {
      Name = "${var.env_prefix}-server"
